@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Helenio TV - WebTV Player Pro v6.3</title>
+    <title>Helenio TV - WebTV Player Pro v6.4</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- SDK Oficial Google Cast -->
+    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
     <style>
         :root {
             --bg-deep: #04070f;
@@ -110,6 +112,7 @@
 
         .header-actions {
             display: flex;
+            align-items: center;
             gap: 8px;
             flex-shrink: 0;
         }
@@ -125,6 +128,9 @@
             font-size: 0.82rem;
             transition: all 0.2s ease;
             white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn-header:hover, .btn-header:focus-visible {
@@ -147,6 +153,20 @@
             font-weight: 800;
             border-color: #34d399;
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.45);
+        }
+
+        /* Botão nativo Google Cast */
+        google-cast-launcher {
+            width: 36px;
+            height: 36px;
+            --connected-color: #10b981;
+            --disconnected-color: #39d5ff;
+            cursor: pointer;
+            display: inline-block;
+            background: #152238;
+            border-radius: 10px;
+            padding: 6px;
+            border: 1px solid rgba(57, 213, 255, 0.25);
         }
 
         /* ==================== ÁREA PRINCIPAL ==================== */
@@ -212,17 +232,28 @@
             position: absolute;
             top: 14px;
             left: 14px;
-            background: rgba(16, 185, 129, 0.92);
+            background: rgba(16, 185, 129, 0.94);
             color: #031710;
             font-weight: 800;
             font-size: 0.78rem;
-            padding: 6px 14px;
+            padding: 7px 14px;
             border-radius: 20px;
             display: none;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             z-index: 45;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .cast-banner button {
+            background: #031710;
+            color: #34d399;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
         }
 
         .player-controls {
@@ -261,6 +292,78 @@
             background: var(--success);
             color: #031710;
             border-color: #34d399;
+        }
+
+        /* ==================== MENU RÁPIDO DE TRANSMISSÃO ==================== */
+        .cast-popover {
+            position: absolute;
+            top: 64px;
+            right: 14px;
+            width: 300px;
+            background: rgba(12, 20, 36, 0.98);
+            border: 1px solid rgba(57, 213, 255, 0.35);
+            border-radius: 14px;
+            padding: 12px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 90;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(16px);
+        }
+
+        .cast-popover.open {
+            display: flex;
+        }
+
+        .cast-popover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: var(--primary);
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .cast-action-btn {
+            background: #17253d;
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 12px;
+            border-radius: 10px;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.15s ease;
+        }
+
+        .cast-action-btn:hover {
+            background: #213659;
+            border-color: var(--primary);
+        }
+
+        .cast-action-btn .icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .cast-action-btn .info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cast-action-btn .title {
+            font-size: 0.83rem;
+            font-weight: 700;
+        }
+
+        .cast-action-btn .sub {
+            font-size: 0.71rem;
+            color: var(--text-muted);
         }
 
         /* ==================== SIDEBAR COM ROLAGEM GARANTIDA ==================== */
@@ -403,7 +506,6 @@
             list-style: none;
         }
 
-        /* ==================== BARRA DE ROLAGEM FIXA NA BASE DA LISTA ==================== */
         .scroll-bar-footer {
             flex-shrink: 0;
             display: grid;
@@ -580,29 +682,37 @@
             padding-top: 14px;
         }
 
-        .cast-guide-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 14px 0;
-            font-size: 0.86rem;
-            color: #cbd5e1;
-        }
-
-        .cast-guide-list li {
-            background: rgba(20, 31, 51, 0.85);
-            padding: 10px 12px;
-            border-radius: 10px;
-            border-left: 3px solid var(--primary);
-        }
-
         .status-msg {
             font-size: 0.84rem;
             margin-top: 8px;
             color: var(--primary);
             min-height: 1.2em;
             word-break: break-word;
+        }
+
+        /* Toast de Feedback Rápido */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(15, 23, 42, 0.96);
+            color: #fff;
+            border: 1px solid var(--primary);
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            pointer-events: none;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
         }
 
         /* ==================== RESPONSIVIDADE ==================== */
@@ -645,6 +755,8 @@
 </head>
 <body>
 
+    <div id="toast" class="toast"></div>
+
     <!-- CURSOR VIRTUAL SVG -->
     <div id="virtualCursor">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -655,23 +767,28 @@
     <header>
         <div class="logo-area">
             <div class="helenio-brand">Helenio TV</div>
-            <span class="logo-badge">Pro v6.3</span>
+            <span class="logo-badge">Pro v6.4</span>
             <div class="channel-count" id="countBadge">0 canais</div>
             <div class="now-playing-header" id="nowPlayingHeader"></div>
         </div>
         <div class="header-actions">
-            <button class="btn-header" id="btnCastHeader" onclick="castToDevice()" title="Transmitir ou espelhar na TV / Projetor">📺 Transmitir</button>
+            <!-- Botão Nativo Google Cast -->
+            <google-cast-launcher title="Google Cast / Chromecast"></google-cast-launcher>
+            <button class="btn-header" id="btnCastHeader" onclick="startDirectCast()" title="Transmitir diretamente para TV / Chromecast / Projetor">📺 Transmitir</button>
             <button class="btn-header" id="btnToggleCursor" onclick="toggleVirtualCursor()" title="Ativar/Desativar Cursor Virtual (Setas + Enter)">🖱️ Cursor</button>
-            <button class="btn-header" onclick="toggleCinemaMode()">🎬 Modo Cinema</button>
-            <button class="btn-header" onclick="showSettings()">⚙️ Configurações</button>
+            <button class="btn-header" onclick="toggleCinemaMode()">🎬 Cinema</button>
+            <button class="btn-header" onclick="showSettings()">⚙️ Config</button>
         </div>
     </header>
 
     <div class="main-container">
-        <div class="player-area">
+        <div class="player-area" id="playerArea">
             <video id="videoPlayer" controls autoplay playsinline x-webkit-airplay="allow"></video>
 
-            <div class="cast-banner" id="castBanner">📡 Transmitindo para TV / Projetor</div>
+            <div class="cast-banner" id="castBanner">
+                <span id="castBannerText">📡 Transmitindo na TV</span>
+                <button onclick="stopCasting()">Parar</button>
+            </div>
 
             <div class="live-pill">
                 <span class="live-dot"></span>
@@ -679,10 +796,46 @@
             </div>
             
             <div class="player-controls">
-                <button class="btn-control" id="btnCastPlayer" onclick="castToDevice()" title="Transmitir / Espelhar na TV ou Projetor">📡</button>
-                <button class="btn-control" onclick="toggleVirtualCursor()" title="Alternar Cursor Virtual">🖱️</button>
+                <button class="btn-control" id="btnCastPlayer" onclick="startDirectCast()" title="Transmitir Direto na TV">📡</button>
+                <button class="btn-control" onclick="toggleCastMenu()" title="Mais Opções de Transmissão (App Externo / PiP / Link)">⋮</button>
                 <button class="btn-control" onclick="toggleCinemaMode()" title="Ocultar/Mostrar Lista">👁️</button>
                 <button class="btn-control" onclick="toggleFullscreen()" title="Tela Cheia">⛶</button>
+            </div>
+
+            <!-- MENU RÁPIDO DE TRANSMISSÃO (SEM TEXTOS LONGOS) -->
+            <div class="cast-popover" id="castPopover">
+                <div class="cast-popover-header">
+                    <span>📡 Opções de Transmissão</span>
+                    <span style="cursor:pointer; padding:2px 6px;" onclick="toggleCastMenu(false)">✕</span>
+                </div>
+                <button class="cast-action-btn" onclick="startDirectCast(); toggleCastMenu(false);">
+                    <span class="icon">📺</span>
+                    <span class="info">
+                        <span class="title">Chromecast / TV na Rede</span>
+                        <span class="sub">Envia o sinal M3U8 direto (sem blob)</span>
+                    </span>
+                </button>
+                <button class="cast-action-btn" onclick="openInExternalCaster(); toggleCastMenu(false);">
+                    <span class="icon">📲</span>
+                    <span class="info">
+                        <span class="title">Abrir em App Cast / Player</span>
+                        <span class="sub">Web Video Caster, VLC ou DLNA (HY300)</span>
+                    </span>
+                </button>
+                <button class="cast-action-btn" onclick="togglePiP(); toggleCastMenu(false);">
+                    <span class="icon">🖼️</span>
+                    <span class="info">
+                        <span class="title">Janela Flutuante (PiP)</span>
+                        <span class="sub">Destaca o vídeo para espelhar</span>
+                    </span>
+                </button>
+                <button class="cast-action-btn" onclick="copyCurrentStreamUrl(); toggleCastMenu(false);">
+                    <span class="icon">📋</span>
+                    <span class="info">
+                        <span class="title">Copiar URL Direta do Canal</span>
+                        <span class="sub">Para colar em players externos</span>
+                    </span>
+                </button>
             </div>
 
             <div id="errorOverlay" class="error-overlay">
@@ -708,7 +861,6 @@
                 <ul id="channelList"></ul>
             </div>
 
-            <!-- BOTÕES DE ROLAGEM DA LISTA DE CANAIS -->
             <div class="scroll-bar-footer" aria-label="Controles de rolagem da lista">
                 <button type="button" class="btn-scroll" onclick="scrollToEdge('top')" title="Ir para o Topo da Lista">⤒ Topo</button>
                 <button type="button" class="btn-scroll" onclick="scrollList(-320)" title="Rolar Lista para Cima">▲ Cima</button>
@@ -745,35 +897,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE ESPELHAMENTO / TRANSMISSÃO -->
-    <div id="castModal" class="modal" onclick="closeModal(event, 'castModal')">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <h2>📺 Espelhar na TV ou Projetor</h2>
-            <p id="castModalSub" style="font-size:0.85rem; color:var(--text-muted);">
-                O seletor direto de transmissão não foi exibido automaticamente neste navegador ou dispositivo. Utilize uma das opções abaixo na mesma rede Wi-Fi:
-            </p>
-
-            <ul class="cast-guide-list">
-                <li>
-                    <strong style="color:var(--primary);">1. Menu do Navegador (Chrome / Edge / Brave):</strong><br>
-                    Toque nos <strong>3 pontinhos (⋮)</strong> no canto superior direito do navegador e selecione <strong>"Transmitir..." (Cast)</strong> para escolher sua TV ou Projetor.
-                </li>
-                <li>
-                    <strong style="color:var(--primary);">2. Projetores (HY300 / Miracast / Wi-Fi Direct):</strong><br>
-                    Deslize a barra superior do celular e ative <strong>"Transmitir" / "Smart View" / "Projeção sem fio"</strong>, depois clique no botão <strong>⛶ Tela Cheia</strong> aqui no player.
-                </li>
-                <li>
-                    <strong style="color:var(--primary);">3. Copiar Link Direto do Canal Atual:</strong><br>
-                    Abra diretamente no player da TV/Projetor caso prefira reprodução nativa sem depender do celular.
-                </li>
-            </ul>
-
-            <button class="btn-secondary" style="margin-bottom:8px;" onclick="copyCurrentStreamUrl()">📋 Copiar Link do Canal Atual</button>
-            <div id="castStatusMsg" class="status-msg" style="margin-bottom:8px;"></div>
-            <button class="btn-primary" style="background:#334155; color:white;" onclick="closeModal(null, 'castModal')">Entendi</button>
-        </div>
-    </div>
-
     <script>
         const MASTER_KEY = "$2a$10$cXJaZGoiDlDf7aL8aIElD.WznNlzWQYC9hyoDRXLZaEmGPiYV6lGS";
         const ACCESS_KEY = "$2a$10$gZT/ahG.y7XVGIXuodcyKulssYnan7fs6AiUXWBpcnWsfeRYvoR12";
@@ -787,19 +910,29 @@
         const statusMsg = document.getElementById('statusMessage');
         const nowPlayingHeader = document.getElementById('nowPlayingHeader');
         const liveLabel = document.getElementById('liveLabel');
+        const toastEl = document.getElementById('toast');
         
         let hls = null;
         let channels = [];
         let favorites = JSON.parse(localStorage.getItem('favorites_v6')) || [];
         let currentChannel = null;
         let currentTab = 0;
+        let castSession = null;
 
-        /* ==================== SISTEMA DE TRANSMISSÃO / ESPELHAMENTO ==================== */
+        function showToast(msg) {
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            clearTimeout(toastEl._timer);
+            toastEl._timer = setTimeout(() => toastEl.classList.remove('show'), 3200);
+        }
+
+        /* ==================== MOTOR DE TRANSMISSÃO REAL (SEM BLOQUEIO BLOB) ==================== */
         const btnCastHeader = document.getElementById('btnCastHeader');
         const btnCastPlayer = document.getElementById('btnCastPlayer');
         const castBanner = document.getElementById('castBanner');
+        const castBannerText = document.getElementById('castBannerText');
 
-        function updateCastUIState(state) {
+        function updateCastUIState(state, deviceName = '') {
             const isConnected = state === 'connected';
             const isConnecting = state === 'connecting';
 
@@ -809,6 +942,7 @@
 
             if (isConnected) {
                 btnCastHeader.textContent = '📡 Transmitindo';
+                castBannerText.textContent = `📡 Transmitindo${deviceName ? ' em ' + deviceName : ''}`;
             } else if (isConnecting) {
                 btnCastHeader.textContent = '⏳ Conectando...';
             } else {
@@ -816,51 +950,195 @@
             }
         }
 
-        if ('remote' in video) {
-            video.remote.addEventListener('connect', () => updateCastUIState('connected'));
-            video.remote.addEventListener('connecting', () => updateCastUIState('connecting'));
-            video.remote.addEventListener('disconnect', () => updateCastUIState('disconnected'));
+        // 1. Inicialização do Google Cast SDK Oficial
+        window['__onGCastApiAvailable'] = function(isAvailable) {
+            if (!isAvailable || !window.cast || !window.chrome || !chrome.cast) return;
+            const context = cast.framework.CastContext.getInstance();
+            context.setOptions({
+                receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+                autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+            });
+
+            context.addEventListener(
+                cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+                (event) => {
+                    switch (event.sessionState) {
+                        case cast.framework.SessionState.SESSION_STARTED:
+                        case cast.framework.SessionState.SESSION_RESUMED:
+                            castSession = context.getCurrentSession();
+                            const devName = castSession.getCastDevice().friendlyName || 'TV';
+                            updateCastUIState('connected', devName);
+                            loadMediaIntoCastSession(castSession);
+                            break;
+                        case cast.framework.SessionState.SESSION_ENDED:
+                            castSession = null;
+                            updateCastUIState('disconnected');
+                            if (currentChannel) playChannel(currentChannel);
+                            break;
+                    }
+                }
+            );
+        };
+
+        function loadMediaIntoCastSession(session) {
+            if (!session || !currentChannel || !currentChannel.url) return;
+            const mediaInfo = new chrome.cast.media.MediaInfo(currentChannel.url, 'application/x-mpegURL');
+            mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
+            mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+            mediaInfo.metadata.title = currentChannel.name;
+            if (currentChannel.logo) {
+                mediaInfo.metadata.images = [new chrome.cast.Image(currentChannel.logo)];
+            }
+
+            const request = new chrome.cast.media.LoadRequest(mediaInfo);
+            request.autoplay = true;
+            session.loadMedia(request).then(() => {
+                video.pause();
+                showToast(`📡 "${currentChannel.name}" enviado para a TV!`);
+            }).catch((err) => {
+                console.error('Erro Cast Media:', err);
+                showToast('⚠️ Falha ao carregar stream no receptor Cast.');
+            });
         }
 
-        async function castToDevice() {
-            document.getElementById('castStatusMsg').textContent = '';
+        // 2. Disparo Direto (Google Cast -> Remote Playback sem Blob -> Intent Android)
+        async function startDirectCast() {
+            if (!currentChannel || !currentChannel.url) {
+                showToast('⚠️ Selecione um canal antes de transmitir.');
+                return;
+            }
 
-            // 1. Tenta API padrão Remote Playback (Chrome, Edge, Brave, Android)
-            if ('remote' in video && typeof video.remote.prompt === 'function') {
-                try {
-                    await video.remote.prompt();
+            // A) Se já existe sessão Google Cast ativa, troca o canal direto na TV
+            if (window.cast && cast.framework) {
+                const context = cast.framework.CastContext.getInstance();
+                const activeSession = context.getCurrentSession();
+                if (activeSession) {
+                    loadMediaIntoCastSession(activeSession);
                     return;
-                } catch (err) {
-                    // Se o usuário apenas fechou a janela de seleção, não abre o guia
-                    if (err.name === 'AbortError') return;
-                    console.warn("Remote Playback fallback acionado:", err.name, err.message);
+                }
+                try {
+                    await context.requestSession();
+                    return;
+                } catch (e) {
+                    // Segue para Remote Playback nativo caso não haja Chromecast na rede
                 }
             }
 
-            // 2. Tenta suporte AirPlay (Safari / Apple)
+            // B) Desbloqueia Remote Playback trocando temporariamente blob: pela URL real .m3u8
+            if ('remote' in video && typeof video.remote.prompt === 'function') {
+                const wasHlsActive = !!hls;
+                const realUrl = currentChannel.url;
+                try {
+                    if (hls) {
+                        hls.destroy();
+                        hls = null;
+                    }
+                    video.src = realUrl;
+                    await video.remote.prompt();
+                    return;
+                } catch (err) {
+                    // Restaura reprodução local via hls.js se o seletor for cancelado ou indisponível
+                    if (wasHlsActive) playChannel(currentChannel);
+                    if (err.name === 'AbortError') return;
+                }
+            }
+
+            // C) AirPlay (Safari / Apple)
             if (typeof video.webkitShowPlaybackTargetPicker === 'function') {
                 try {
                     video.webkitShowPlaybackTargetPicker();
                     return;
-                } catch (err) {
-                    console.warn("AirPlay fallback:", err);
-                }
+                } catch (e) {}
             }
 
-            // 3. Fallback: exibe instruções práticas de espelhamento e link direto
-            document.getElementById('castModal').style.display = 'flex';
+            // D) Abre menu rápido de ações diretas (App Cast / PiP / Copiar URL)
+            toggleCastMenu(true);
+            showToast('📲 Escolha enviar para App Cast/TV ou Tela Cheia');
+        }
+
+        function stopCasting() {
+            if (window.cast && cast.framework) {
+                const session = cast.framework.CastContext.getInstance().getCurrentSession();
+                if (session) session.endSession(true);
+            }
+            if ('remote' in video && video.remote.state === 'connected') {
+                video.src = '';
+            }
+            updateCastUIState('disconnected');
+            if (currentChannel) playChannel(currentChannel);
+        }
+
+        // 3. Envio direto para Apps de Transmissão/Player (Android Intent / URL Scheme)
+        function openInExternalCaster() {
+            if (!currentChannel || !currentChannel.url) {
+                showToast('⚠️ Nenhum canal ativo.');
+                return;
+            }
+            const streamUrl = currentChannel.url;
+            const title = encodeURIComponent(currentChannel.name);
+            const isAndroid = /Android/i.test(navigator.userAgent);
+
+            if (isAndroid) {
+                // Intent genérico de vídeo que permite escolher Web Video Caster, VLC, MX Player ou DLNA
+                const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
+                const scheme = streamUrl.startsWith('https') ? 'https' : 'http';
+                const intentUri = `intent://${cleanUrl}#Intent;scheme=${scheme};type=video/*;S.title=${title};end`;
+                window.location.href = intentUri;
+            } else {
+                copyCurrentStreamUrl();
+                window.open(streamUrl, '_blank');
+            }
+        }
+
+        // 4. Picture-in-Picture (Janela Flutuante Isolada)
+        async function togglePiP() {
+            try {
+                if (document.pictureInPictureElement) {
+                    await document.exitPictureInPicture();
+                } else if (document.pictureInPictureEnabled) {
+                    await video.requestPictureInPicture();
+                } else {
+                    showToast('⚠️ PiP não suportado neste navegador.');
+                }
+            } catch (err) {
+                showToast('⚠️ Inicie a reprodução antes de ativar o PiP.');
+            }
+        }
+
+        function toggleCastMenu(forceState) {
+            const popover = document.getElementById('castPopover');
+            if (typeof forceState === 'boolean') {
+                popover.classList.toggle('open', forceState);
+            } else {
+                popover.classList.toggle('open');
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            const popover = document.getElementById('castPopover');
+            if (popover.classList.contains('open') && !e.target.closest('#castPopover') && !e.target.closest('.player-controls')) {
+                popover.classList.remove('open');
+            }
+        });
+
+        if ('remote' in video) {
+            video.remote.addEventListener('connect', () => updateCastUIState('connected'));
+            video.remote.addEventListener('connecting', () => updateCastUIState('connecting'));
+            video.remote.addEventListener('disconnect', () => {
+                updateCastUIState('disconnected');
+                if (currentChannel) playChannel(currentChannel);
+            });
         }
 
         function copyCurrentStreamUrl() {
-            const castStatusMsg = document.getElementById('castStatusMsg');
             if (!currentChannel || !currentChannel.url) {
-                castStatusMsg.textContent = "⚠️ Nenhum canal selecionado no momento.";
+                showToast('⚠️ Nenhum canal selecionado.');
                 return;
             }
             navigator.clipboard.writeText(currentChannel.url).then(() => {
-                castStatusMsg.textContent = `✅ Link de "${currentChannel.name}" copiado!`;
+                showToast(`✅ URL de "${currentChannel.name}" copiada!`);
             }).catch(() => {
-                castStatusMsg.textContent = `Link: ${currentChannel.url}`;
+                showToast(`Link: ${currentChannel.url}`);
             });
         }
 
@@ -1119,6 +1397,15 @@
             nowPlayingHeader.textContent = `▶ ${ch.name}`;
             liveLabel.textContent = `AO VIVO • ${ch.name.toUpperCase()}`;
 
+            // Se estiver conectado ao Chromecast, envia o novo canal direto para a TV
+            if (window.cast && cast.framework) {
+                const activeSession = cast.framework.CastContext.getInstance().getCurrentSession();
+                if (activeSession) {
+                    loadMediaIntoCastSession(activeSession);
+                    return;
+                }
+            }
+
             if (hls) hls.destroy();
 
             if (Hls.isSupported()) {
@@ -1193,7 +1480,13 @@
 
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
+                if (video.requestFullscreen) {
+                    video.requestFullscreen();
+                } else if (video.webkitEnterFullscreen) {
+                    video.webkitEnterFullscreen();
+                } else {
+                    document.documentElement.requestFullscreen();
+                }
             } else {
                 if (document.exitFullscreen) document.exitFullscreen();
             }
